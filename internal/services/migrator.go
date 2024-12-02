@@ -17,26 +17,25 @@ func RunMigrations(cfg db.ConnectionConfig) error {
 
 	fmt.Println("Connection string:", connString)
 
-	// Открытие подключения к базе данных
+	// OPEN DB
 	dbConn, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatalf("Failed to open the database: %v", err)
 		return err
 	}
-	// Проверка, что подключение работает
+	// CHECKING CONNECTION
 	if err := dbConn.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 		return err
 	}
 
-	// Инициализация драйвера
+	// DRIVER INIT
 	driver, err := postgres.WithInstance(dbConn, &postgres.Config{})
 	if err != nil {
 		log.Fatalf("Could not initialize the postgres instance: %v", err)
 		return err
 	}
 
-	// Создание миграции с явно зарегистрированным драйвером
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://./migrations", // Путь к папке с миграциями
 		"postgres",            // Имя драйвера
@@ -47,7 +46,7 @@ func RunMigrations(cfg db.ConnectionConfig) error {
 		return err
 	}
 
-	// Применение миграций
+	// UP MIGRATIONS
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("failed to apply migrations: %v", err)

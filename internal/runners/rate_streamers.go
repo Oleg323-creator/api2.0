@@ -43,10 +43,9 @@ func NewRunner(conType string, pollRate int, from string, to string, db *db.Wrap
 }
 
 func (r *Runner) saveDataToDB(data map[string]interface{}) error {
-	// Преобразуем данные в нужный формат (например, если data["rate"] или аналогичное значение)
+
 	rate, ok := data["rate"].(float64)
 	if !ok {
-		// Запуск команды docker-compose up, если формат данных неверный
 		cmd := exec.Command("docker-compose", "up")
 		err := cmd.Run()
 		if err != nil {
