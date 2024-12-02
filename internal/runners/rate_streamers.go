@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"geckoapi1/pkg/connectors"
+	"github.com/Oleg323-creator/api2.0/pkg/connectros"
 	"log"
 	"sync"
 	"time"

@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"geckoapi1/internal/db"
-	"geckoapi1/internal/services"
+	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/services"
 	"github.com/joho/godotenv"
 	"log"
 	"os"

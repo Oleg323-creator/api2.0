@@ -18,7 +18,7 @@ var ticker = map[string]string{
 
 // LOADING .ENV
 func init() {
-	err := godotenv.Load("/home/oleh/GolandProjects/geckoapi1/.env")
+	err := godotenv.Load("/home/oleh/GolandProjects/api2.0/.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}

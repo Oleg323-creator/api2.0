@@ -2,8 +2,8 @@ package connectors
 
 import (
 	"fmt"
-	"geckoapi1/pkg/connectors/coingecko"
-	"geckoapi1/pkg/connectors/crypto_compare"
+	"github.com/Oleg323-creator/api2.0/pkg/connectros/coingecko"
+	"github.com/Oleg323-creator/api2.0/pkg/connectros/crypto_compare"
 )
 
 const СoingeckoType = "Coingecko"

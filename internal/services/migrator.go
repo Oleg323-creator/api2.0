@@ -4,7 +4,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 
 	"fmt"
-	"geckoapi1/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db"
 	"log"
 )
 
