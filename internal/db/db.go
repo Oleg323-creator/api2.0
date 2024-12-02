@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
-	"time"
 )
 
 type ConnectionConfig struct {
@@ -15,7 +14,54 @@ type ConnectionConfig struct {
 	Password string
 	DBName   string
 	SSLMode  string
-	TimeZone string
+}
+
+func NewPostgresDB(ctx context.Context, cfg ConnectionConfig) (*pgxpool.Pool, error) {
+
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", cfg.Username, cfg.Password, cfg.Host,
+		cfg.Port, cfg.DBName, cfg.SSLMode)
+
+	//PARCING CONFIG
+	log.Printf("%s", connString)                 //(это для меня на будущее) can use easier way by pgxpool.Connect + defer dbPool.Close() without config parcing
+	conf, err := pgxpool.ParseConfig(connString) // Using environment variables instead of a connection string.
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+		return nil, err
+	}
+
+	//CONNECTING CONFIG
+	pool, err := pgxpool.ConnectConfig(ctx, conf)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+		return nil, err
+	}
+
+	if err = getConnection(ctx, pool); err != nil {
+		log.Fatalf("%s", err.Error())
+		return nil, err
+	}
+
+	return pool, nil
+}
+
+// get connection from pool and release
+func getConnection(ctx context.Context, pool *pgxpool.Pool) error {
+
+	conn, err := pool.Acquire(ctx)
+
+	defer conn.Release()
+
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+		return err
+	}
+	if err = conn.Ping(ctx); err != nil {
+		log.Fatalf("%s", err.Error())
+		return err
+	}
+
+	log.Println("Connected to database")
+	return nil
 }
 
 type WrapperDB struct {
@@ -46,34 +92,5 @@ func NewDB(ctx context.Context, DBType string, cfg ConnectionConfig) (*WrapperDB
 }
 
 func (db *WrapperDB) Close() {
-	switch db.DBType {
-	case "postgres":
-		db.Pool.Close()
-	default:
-		db.Pool.Close()
-	}
-}
-
-// Функция для записи данных в базу данных
-func saveDataToDB(data Data) error {
-	query := "INSERT INTO rates (value, timestamp) VALUES ($1, $2)"
-	_, err := dbPool.Exec(context.Background(), query, data.Value, data.Timestamp)
-	if err != nil {
-		return fmt.Errorf("failed to insert data: %v", err)
-	}
-	log.Println("Data saved to DB:", data)
-	return nil
-}
-
-// Периодическая функция, генерирующая данные и записывающая их в базу
-func generateAndSaveData() {
-	data := Data{
-		Value:     "RandomValue", // Здесь ваши реальные данные
-		Timestamp: time.Now(),
-	}
-
-	err := saveDataToDB(data)
-	if err != nil {
-		log.Printf("Error saving data: %v", err)
-	}
+	db.Pool.Close()
 }
