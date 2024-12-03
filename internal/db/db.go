@@ -25,7 +25,7 @@ func NewPostgresDB(ctx context.Context, cfg ConnectionConfig) (*pgxpool.Pool, er
 	log.Printf("%s", connString)                 //(это для меня на будущее) can use easier way by pgxpool.Connect + defer dbPool.Close() without config parcing
 	conf, err := pgxpool.ParseConfig(connString) // Using environment variables instead of a connection string.
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.Fatalf("Error %s", err.Error())
 		return nil, err
 	}
 
@@ -36,7 +36,8 @@ func NewPostgresDB(ctx context.Context, cfg ConnectionConfig) (*pgxpool.Pool, er
 		return nil, err
 	}
 
-	if err = getConnection(ctx, pool); err != nil {
+	err = getConnection(ctx, pool)
+	if err != nil {
 		log.Fatalf("%s", err.Error())
 		return nil, err
 	}
@@ -48,14 +49,15 @@ func NewPostgresDB(ctx context.Context, cfg ConnectionConfig) (*pgxpool.Pool, er
 func getConnection(ctx context.Context, pool *pgxpool.Pool) error {
 
 	conn, err := pool.Acquire(ctx)
-
-	defer conn.Release()
-
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 		return err
 	}
-	if err = conn.Ping(ctx); err != nil {
+
+	defer conn.Release()
+
+	err = conn.Ping(ctx)
+	if err != nil {
 		log.Fatalf("%s", err.Error())
 		return err
 	}

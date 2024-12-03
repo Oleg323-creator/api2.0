@@ -7,7 +7,6 @@ import (
 	"github.com/Oleg323-creator/api2.0/pkg/connectros"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"log"
-	"os/exec"
 	"sync"
 	"time"
 )
@@ -42,29 +41,6 @@ func NewRunner(conType string, pollRate int, from string, to string, db *db.Wrap
 	}, nil
 }
 
-func (r *Runner) saveDataToDB(data map[string]interface{}) error {
-
-	rate, ok := data["rate"].(float64)
-	if !ok {
-		cmd := exec.Command("docker-compose", "up")
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to run docker-compose: %v", err)
-		}
-		return fmt.Errorf("invalid rate data format")
-	}
-
-	// Подготовка SQL-запроса
-	query := "INSERT INTO rates (from_currency, to_currency, rate, provider, timestamp) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Pool.Exec(context.Background(), query, r.rateFrom, r.rateTo, rate, r.connectorType, time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to insert data: %v", err)
-	}
-
-	log.Println("Data saved to DB:", data)
-	return nil
-}
-
 func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -93,4 +69,22 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 		}
 	}
+}
+
+func (r *Runner) saveDataToDB(data map[string]interface{}) error {
+
+	rate, ok := data["USDT"].(float64)
+	if !ok {
+		return fmt.Errorf("invalid rate data format: expected float64, got %T", data["rate"])
+	}
+
+	// SQL REQUEST
+	query := "INSERT INTO rates (from_currency, to_currency, rate, provider, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+	_, err := r.db.Pool.Exec(context.Background(), query, r.rateFrom, r.rateTo, rate, r.connectorType, time.Now(), time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to insert data: %v", err)
+	}
+
+	log.Println("Data saved to DB:", data)
+	return nil
 }
