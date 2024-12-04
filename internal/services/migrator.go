@@ -49,7 +49,8 @@ func RunMigrations(cfg db.ConnectionConfig) error {
 	// UP MIGRATIONS
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("failed to apply migrations: %v", err)
+		log.Fatalf("Failed to apply migrations: %v", err)
+		return err
 	}
 
 	log.Println("Migrations applied successfully")

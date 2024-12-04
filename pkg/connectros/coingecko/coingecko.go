@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	gecko "github.com/superoo7/go-gecko/v3"
 )
 
 type GeckoApi struct {
-	URL string
+	URL  string
+	once sync.Once
 }
 
 func NewGeckoApi() *GeckoApi {

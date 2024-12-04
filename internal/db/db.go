@@ -82,7 +82,7 @@ func NewDB(ctx context.Context, DBType string, cfg ConnectionConfig) (*WrapperDB
 		pool, err = NewPostgresDB(ctx, cfg)
 	}
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.Fatalf("error connection to db %s", err.Error())
 		return nil, err
 	}
 

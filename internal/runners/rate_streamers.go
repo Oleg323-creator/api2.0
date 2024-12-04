@@ -25,11 +25,11 @@ func NewRunner(conType string, pollRate int, from string, to string, db *db.Wrap
 	if err != nil {
 		return nil, fmt.Errorf("invalid connector type")
 	}
-	coins, err := conn.LoadCoins()
+
+	_, err = conn.LoadCoins()
 	if err != nil {
 		return nil, fmt.Errorf("can't load coins")
 	}
-	fmt.Println(coins)
 
 	return &Runner{
 		connectorInit: conn,
@@ -73,13 +73,29 @@ func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 func (r *Runner) saveDataToDB(data map[string]interface{}) error {
 
-	rate, ok := data["USDT"].(float64)
+	rate, ok := data[""]
 	if !ok {
-		return fmt.Errorf("invalid rate data format: expected float64, got %T", data["rate"])
+		rate, ok = data["USDT"]
+		if !ok {
+			rate, ok = data["BTC"]
+			if !ok {
+				rate, ok = data["ETH"]
+				if !ok {
+					rate, ok = data["BNB"]
+					if !ok {
+						return fmt.Errorf("invalid rate data format: got %T", data["rate"])
+					}
+				}
+			}
+		}
 	}
 
+	//ON CONFLICT
+
 	// SQL REQUEST
-	query := "INSERT INTO rates (from_currency, to_currency, rate, provider, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+	query := "INSERT INTO rates (from_currency, to_currency, rate, provider, created_at, updated_at)" +
+		" VALUES ($1, $2, $3, $4, $5, $6)" + " ON CONFLICT (from_currency, to_currency, provider)" +
+		" DO UPDATE SET rate = EXCLUDED.rate, updated_at = EXCLUDED.updated_at;"
 	_, err := r.db.Pool.Exec(context.Background(), query, r.rateFrom, r.rateTo, rate, r.connectorType, time.Now(), time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to insert data: %v", err)
