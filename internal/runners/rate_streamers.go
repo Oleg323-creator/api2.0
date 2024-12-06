@@ -3,9 +3,11 @@ package runners
 import (
 	"context"
 	"fmt"
+	//sq "github.com/Masterminds/squirrel"
 	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/Oleg323-creator/api2.0/pkg/connectros"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"log"
 	"sync"
 	"time"
@@ -103,4 +105,29 @@ func (r *Runner) saveDataToDB(data map[string]interface{}) error {
 
 	log.Println("Data saved to DB:", data)
 	return nil
+
+	/*	query, args, _ := sq.Insert("rates").
+				Columns("from_currency", "to_currency", "rate", "provider", "created_at", "updated_at").
+				Values(r.rateFrom, r.rateTo, rate, r.connectorType, time.Now(), time.Now()).
+				Suffix("ON CONFLICT (from_currency, to_currency, provider) DO UPDATE SET rate = EXCLUDED.rate, updated_at = EXCLUDED.updated_at").
+				ToSql()
+
+			fmt.Println("SQL Query:", query)
+			fmt.Println("Arguments:", args)
+
+			conn, err := r.db.Pool.Acquire(r.db.Ctx)
+			if err != nil {
+				return fmt.Errorf("failed to acquire connection: %v", err)
+			}
+			defer conn.Release()
+
+			_, err = conn.Exec(r.db.Ctx, query, args...)
+			if err != nil {
+				return fmt.Errorf("failed to insert data: %v", err)
+			}
+
+			log.Println("Data saved to DB:", data)
+			return nil
+		}
+	*/
 }

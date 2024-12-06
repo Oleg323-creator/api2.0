@@ -17,7 +17,7 @@ import (
 )
 
 const СoingeckoType = "Coingecko"
-const CryptoCompType = "Crypto Compare"
+const CryptoCompType = "Crypto_Compare"
 
 func main() {
 	// INIT CONFIG
@@ -44,7 +44,7 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	//RUNNERS INIT
+	//CRYPTO COMPARE RUNNERS INIT
 
 	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT", dbConn)
 	if err != nil {
@@ -60,39 +60,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
-	/*
-		runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
 
-		runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		//OPOSITE RUNNERS INIT
-
-		runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-	*/
 	runnerUsdtBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BTC", dbConn)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
@@ -108,11 +76,47 @@ func main() {
 		log.Fatal("Failed to create runner:", err)
 	}
 
+	/*
+
+		//COINGECKO RUNNERS INIT
+		runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+		runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+		runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+		runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+		runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+		runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH", dbConn)
+		if err != nil {
+			log.Fatal("Failed to create runner:", err)
+		}
+
+
+	*/
+
 	runnerSlice := []*runners.Runner{runnerBtcCryptoComp, runnerUsdtBnbCryptoComp,
-		runnerEthCryptoComp, runnerBnbCryptoComp,
-		runnerUsdtBtcCryptoComp, runnerUsdtEthCryptoComp,
-		/*runnerUsdtEthCoingecko, runnerUsdtBnbCoingecko, runnerBtcCoingecko, runnerEthCoingecko,
-		runnerBnbCoingecko, runnerUsdtBtcСoingecko*/}
+		runnerEthCryptoComp, runnerBnbCryptoComp, runnerUsdtBtcCryptoComp,
+		runnerUsdtEthCryptoComp, /* runnerBnbCoingecko,runnerUsdtEthCoingecko,
+		runnerUsdtBnbCoingecko,  runnerUsdtBtcСoingecko,
+		runnerBtcCoingecko,  runnerEthCoingecko */}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

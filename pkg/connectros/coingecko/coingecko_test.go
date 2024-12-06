@@ -24,7 +24,7 @@ func TestGetRates(t *testing.T) {
 	api := NewGeckoApi()
 
 	// GETTING RATE FOR BTC
-	data, err := api.GetRates("BTC", "USDT")
+	data, err := api.GetRates("USDT", "BNB")
 
 	assert.NoError(t, err)
 
@@ -48,5 +48,5 @@ func TestGetRatesError(t *testing.T) {
 
 	// EXPECTED ERROR
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "conversion rate not found")
+	assert.Equal(t, err.Error(), "failed to fetch rates: %w", err)
 }

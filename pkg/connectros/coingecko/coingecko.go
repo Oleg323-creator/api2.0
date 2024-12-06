@@ -2,6 +2,7 @@ package coingecko
 
 import (
 	"fmt"
+	"github.com/shopspring/decimal"
 	"log"
 	"strings"
 	"sync"
@@ -36,6 +37,7 @@ func (g *GeckoApi) GetRates(from, to string) (map[string]interface{}, error) {
 	var ticker = map[string]string{
 		"BTC":  "bitcoin",
 		"ETH":  "ethereum",
+		"BNB":  "binancecoin",
 		"USDT": "usd",
 	}
 	from = ticker[from]
@@ -54,6 +56,15 @@ func (g *GeckoApi) GetRates(from, to string) (map[string]interface{}, error) {
 		result[ticker[to]] = float64(rate)
 		return result, nil
 	} else {
-		return nil, fmt.Errorf("conversion rate not found")
+		sp, err = cg.SimplePrice(toParam, fromParam)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch rates: %w", err)
+		}
+		if rate, ok = (*sp)[to][from]; ok {
+			result[ticker[from]] = decimal.NewFromFloat(1).Div(decimal.NewFromFloat(float64(rate)))
+			return result, nil
+		} else {
+			return nil, fmt.Errorf("conversion rate not found ")
+		}
 	}
 }

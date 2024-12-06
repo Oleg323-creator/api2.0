@@ -7,7 +7,7 @@ import (
 )
 
 const СoingeckoType = "Coingecko"
-const CryptoCompType = "Crypto Compare"
+const CryptoCompType = "Crypto_Compare"
 
 type ConnectorAPI interface {
 	LoadCoins() (int, error)
