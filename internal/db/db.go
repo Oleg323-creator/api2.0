@@ -1,6 +1,113 @@
 package db
 
 import (
+	"database/sql"
+	"fmt"
+	"log"
+
+	_ "github.com/lib/pq"
+)
+
+// DB CONFIG
+type ConnectionConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+	DBName   string
+	SSLMode  string
+}
+
+// INIT CONNECTION TO DB
+func NewDB(cfg ConnectionConfig) *sql.DB {
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", cfg.Username, cfg.Password, cfg.Host,
+		cfg.Port, cfg.DBName, cfg.SSLMode)
+	log.Printf("Connecting to the database with connection string: %s", connString)
+
+	// CONNECTING
+	db, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatalf("Error opening database connection:", err)
+
+	}
+
+	// CHECKING CONNECTION
+	err = db.Ping()
+	if err != nil {
+		log.Fatalf("Error connecting to the database:", err)
+	}
+
+	log.Println("Successfully connected to the database")
+	return db
+}
+
+/*package db
+
+import (
+	"database/sql"
+	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"log"
+)
+
+type ConnectionConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+	DBName   string
+	SSLMode  string
+}
+
+func NewDB(cfg ConnectionConfig) (*sql.DB, error) {
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", cfg.Username, cfg.Password, cfg.Host,
+		cfg.Port, cfg.DBName, cfg.SSLMode)
+
+	db, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Проверка соединения
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Error connection to db", err)
+	}
+
+	// DRIVER INIT
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("Could not initialize the postgres instance: %v", err)
+		return nil, err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://./migrations", // Путь к папке с миграциями
+		"postgres",            // Имя драйвера
+		driver,                // Экземпляр драйвера
+	)
+	if err != nil {
+		log.Fatalf("Migration failed: %v\n", err)
+		return nil, err
+	}
+
+	// UP MIGRATIONS
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+		return nil, err
+	}
+
+	log.Println("Migrations applied successfully")
+	return db, nil
+}
+
+/*
+package db
+
+import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -96,3 +203,4 @@ func NewDB(ctx context.Context, DBType string, cfg ConnectionConfig) (*WrapperDB
 func (db *WrapperDB) Close() {
 	db.Pool.Close()
 }
+*/

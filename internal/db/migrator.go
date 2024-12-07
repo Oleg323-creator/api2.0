@@ -1,9 +1,51 @@
-package services
+package db
+
+import (
+	"database/sql"
+	_ "fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"log"
+)
+
+// MIGRATIONS UP
+
+func RunMigrations(db *sql.DB) error {
+	// PSQL DRIVER INIT
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("Could not initialize the postgres instance: %v", err)
+		return err
+	}
+
+	// INIT MIGRATIONS
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://./migrations", // PATH TO DIRECTORY WITH MIGRATIONS
+		"postgres",            // DB TYPE
+		driver,                // DRIVER
+	)
+	if err != nil {
+		log.Fatalf("Failed to create migration instance: %v", err)
+		return err
+	}
+
+	// USE MIGRATIONS
+	log.Println("Starting migrations...")
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+		return err
+	}
+
+	log.Println("Migrations applied successfully")
+	return nil
+}
+
+/*package db
 
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -11,7 +53,7 @@ import (
 	"log"
 )
 
-func RunMigrations(cfg db.ConnectionConfig) error {
+func RunMigrations(cfg ConnectionConfig) error {
 	// Строка подключения
 	connString := fmt.Sprintf("postgresql://%s:%s@localhost:%s/%s?sslmode=%s", cfg.Username, cfg.Password, "5429", cfg.DBName, cfg.SSLMode)
 
@@ -56,3 +98,4 @@ func RunMigrations(cfg db.ConnectionConfig) error {
 	log.Println("Migrations applied successfully")
 	return nil
 }
+*/

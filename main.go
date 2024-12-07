@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/handlers"
 	"github.com/Oleg323-creator/api2.0/internal/runners"
-	"github.com/Oleg323-creator/api2.0/internal/services"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,48 +32,70 @@ func main() {
 		SSLMode:  "disable",
 	}
 
-	// UP MIGRATIONS
-	err := services.RunMigrations(cfg)
+	//DB CONNECT
+	// DB CONNECT
+	dbConn := db.NewDB(cfg)
+
+	repo := db.NewRepository(dbConn)
+	handler := handlers.NewHandler(repo)
+
+	// RUN MIGRATIONS
+	err := db.RunMigrations(dbConn)
+	if err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	log.Println("Migrations applied successfully, starting application...")
+
+	http.HandleFunc("/rates/list", handler.GetEndpoint)
+
+	fmt.Println("Server is running on port 8080...")
+	if err = http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal("Server failed:", err)
+
+		log.Println("Application shut down gracefully")
+	}
+	/*// UP MIGRATIONS
+	err := handlers.RunMigrations(cfg)
 	if err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
-	// DB INIT
-	ctx := context.Background()
-	dbConn, err := db.NewDB(ctx, "postgres", cfg)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-	defer dbConn.Close()
-
+		// DB INIT
+		ctx := context.Background()
+		dbConn, err := db.NewDB(ctx, "postgres", cfg)
+		if err != nil {
+			log.Fatal("Failed to connect to database:", err)
+		}
+		defer dbConn.Close()
+	*/
 	//CRYPTO COMPARE RUNNERS INIT
 
-	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT", dbConn)
+	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "ETH", "USDT", dbConn)
+	runnerEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "ETH", "USDT")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BNB", "USDT", dbConn)
+	runnerBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BNB", "USDT")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BTC", dbConn)
+	runnerUsdtBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BTC")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "ETH", dbConn)
+	runnerUsdtEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "ETH")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BNB", dbConn)
+	runnerUsdtBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BNB")
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
@@ -108,8 +132,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to create runner:", err)
 		}
-
-
 	*/
 
 	runnerSlice := []*runners.Runner{runnerBtcCryptoComp, runnerUsdtBnbCryptoComp,
@@ -124,7 +146,10 @@ func main() {
 	var wg sync.WaitGroup
 	for _, runner := range runnerSlice {
 		wg.Add(1)
-		go runner.Run(ctx, &wg)
+		go func(r *runners.Runner) {
+			defer wg.Done()
+			r.Run(dbConn, ctx, &wg)
+		}(runner)
 	}
 
 	sigChan := make(chan os.Signal, 1)
@@ -135,6 +160,4 @@ func main() {
 
 	cancel()
 	wg.Wait()
-
-	log.Println("Application shut down gracefully")
 }
