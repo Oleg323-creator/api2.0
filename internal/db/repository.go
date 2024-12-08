@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"log"
+	"strings"
 )
 
 //USING THIS FILE FOR GETTING DATA FROM DB
@@ -12,15 +13,21 @@ import (
 type RateInfo struct {
 	FromCurrency string  `json:"from_currency"`
 	ToCurrency   string  `json:"to_currency"`
-	Rates        float64 `json:"rates"`
+	Rate         float64 `json:"rate"`
 	Provider     string  `json:"provider"`
+	ID           int     `json:"id"`
 }
 
 type FilterParams struct {
-	FromCurrency string `json:"from_Currency"`
-	ToCurrency   string `json:"to_currency"`
-	Provider     string `json:"provider"`
-	Page         int    `json:"page"`
+	FromCurrency string  `json:"from_Currency"`
+	ToCurrency   string  `json:"to_currency"`
+	Provider     string  `json:"provider"`
+	Page         int     `json:"page"`
+	Limit        int     `json:"limit"`
+	ID           int     `json:"id"`
+	Rate         float64 `json:"rate"`
+	Order        string  `json:"order"`
+	OrderDir     string  `json:"order_dir"`
 }
 
 type Repository struct {
@@ -33,23 +40,35 @@ func NewRepository(db *sql.DB) *Repository {
 
 func (r *Repository) GetRatesFromDB(params FilterParams) ([]RateInfo, error) {
 
-	const pageSize = 3
+	offset := (params.Page - 1) * params.Limit
 
-	offset := (params.Page - 1) * pageSize
-
-	queryBuilder := squirrel.Select("from_currency", "to_currency", "rate", "provider").
+	queryBuilder := squirrel.Select("from_currency", "to_currency", "rate", "provider", "id").
 		From("rates").
-		Limit(uint64(pageSize)).
+		Limit(uint64(params.Limit)).
 		Offset(uint64(offset))
 
 	if params.FromCurrency != "" {
 		queryBuilder = queryBuilder.Where(squirrel.Like{"from_currency": "%" + params.FromCurrency + "%"})
 	}
+
 	if params.ToCurrency != "" {
 		queryBuilder = queryBuilder.Where(squirrel.Like{"to_currency": "%" + params.ToCurrency + "%"})
 	}
+
 	if params.Provider != "" {
 		queryBuilder = queryBuilder.Where(squirrel.Like{"provider": "%" + params.Provider + "%"})
+	}
+
+	if params.Order != "" {
+		orderDirection := strings.ToUpper(params.OrderDir)
+
+		if orderDirection != "ASC" && orderDirection != "DESC" {
+			orderDirection = "ASC"
+		}
+
+		queryBuilder = queryBuilder.OrderBy(fmt.Sprintf("%s %s", params.Order, orderDirection))
+	} else {
+		queryBuilder = queryBuilder.OrderBy("rate DESC") // Сортировка по умолчанию по ID в порядке убывания
 	}
 
 	query, args, err := queryBuilder.PlaceholderFormat(squirrel.Dollar).ToSql()
@@ -66,12 +85,11 @@ func (r *Repository) GetRatesFromDB(params FilterParams) ([]RateInfo, error) {
 	// READING RESULTS
 	for rows.Next() {
 		var rate RateInfo
-		if err = rows.Scan(&rate.FromCurrency, &rate.ToCurrency, &rate.Rates, &rate.Provider); err != nil {
+		if err = rows.Scan(&rate.FromCurrency, &rate.ToCurrency, &rate.Rate, &rate.Provider, &rate.ID); err != nil {
 			log.Fatal(err)
 		}
 
 		rates = append(rates, rate)
-		fmt.Printf("One %s costs %f %s,Pvider = %s \n", rate.FromCurrency, rate.Rates, rate.ToCurrency, rate.Provider)
 	}
 
 	if err = rows.Err(); err != nil {

@@ -11,13 +11,6 @@ import (
 	"strconv"
 )
 
-type FilterParams struct {
-	FromCurrency string `json:"from_currency"`
-	ToCurrency   string `json:"to_currency"`
-	Provider     string `json:"provider"`
-	Page         int    `json:"page"`
-}
-
 type Handler struct {
 	repository *db.Repository
 }
@@ -28,6 +21,13 @@ func NewHandler(repository *db.Repository) *Handler {
 }
 
 func (h *Handler) GetEndpoint(w http.ResponseWriter, r *http.Request) {
+
+	limitStr := r.URL.Query().Get("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 3
+	}
+
 	pageStr := r.URL.Query().Get("page")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page <= 0 {
@@ -37,12 +37,29 @@ func (h *Handler) GetEndpoint(w http.ResponseWriter, r *http.Request) {
 	fromCurrency := r.URL.Query().Get("from_currency")
 	toCurrency := r.URL.Query().Get("to_currency")
 	provider := r.URL.Query().Get("provider")
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		id = 1
+	}
+	rateStr := r.URL.Query().Get("rate")
+	rate, err := strconv.ParseFloat(rateStr, 64)
+	if err != nil {
+		rate = 0
+	}
+	order := r.URL.Query().Get("order")
+	orderDir := r.URL.Query().Get("order_dir")
 
 	params := db.FilterParams{
 		FromCurrency: fromCurrency,
 		ToCurrency:   toCurrency,
 		Provider:     provider,
 		Page:         page,
+		Limit:        limit,
+		OrderDir:     orderDir,
+		ID:           id,
+		Rate:         rate,
+		Order:        order,
 	}
 
 	data, err := h.repository.GetRatesFromDB(params)

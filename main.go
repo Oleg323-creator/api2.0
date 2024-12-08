@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/Oleg323-creator/api2.0/internal/handlers"
 	"github.com/Oleg323-creator/api2.0/internal/runners"
@@ -44,16 +43,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
-	log.Println("Migrations applied successfully, starting application...")
 
-	http.HandleFunc("/rates/list", handler.GetEndpoint)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/rates/list", handler.GetEndpoint)
 
-	fmt.Println("Server is running on port 8080...")
-	if err = http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal("Server failed:", err)
-
-		log.Println("Application shut down gracefully")
+	// INIT SERVER
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
 	}
+
+	// USING DIFFERENT GOROUTINES FOR SERVICE AND FOR PARCING PRICES
+	go func() {
+		log.Println("Server is running on port 8080...")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+	////////////////////////////////////////////////////////////
+	/*
+		http.HandleFunc("/rates/list", handler.GetEndpoint)
+
+		log.Println("Server is running on port 8080...")
+		err = http.ListenAndServe(":8080", nil)
+		if err != nil {
+			log.Fatal("Server failed:", err)
+		}
+	*/
 	/*// UP MIGRATIONS
 	err := handlers.RunMigrations(cfg)
 	if err != nil {
@@ -99,46 +115,43 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
-
 	/*
+					//COINGECKO RUNNERS INIT
+					runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT")
+					if err != nil {
+						log.Fatal("Failed to create runner:", err)
+					}
 
-		//COINGECKO RUNNERS INIT
-		runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT", dbConn)
+				runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT")
+				if err != nil {
+					log.Fatal("Failed to create runner:", err)
+				}
+
+			runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT")
+			if err != nil {
+				log.Fatal("Failed to create runner:", err)
+			}
+
+			runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC")
+			if err != nil {
+				log.Fatal("Failed to create runner:", err)
+			}
+
+		runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB")
 		if err != nil {
 			log.Fatal("Failed to create runner:", err)
 		}
 
-		runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB", dbConn)
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH", dbConn)
+		runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH")
 		if err != nil {
 			log.Fatal("Failed to create runner:", err)
 		}
 	*/
-
 	runnerSlice := []*runners.Runner{runnerBtcCryptoComp, runnerUsdtBnbCryptoComp,
 		runnerEthCryptoComp, runnerBnbCryptoComp, runnerUsdtBtcCryptoComp,
-		runnerUsdtEthCryptoComp, /* runnerBnbCoingecko,runnerUsdtEthCoingecko,
-		runnerUsdtBnbCoingecko,  runnerUsdtBtcСoingecko,
-		runnerBtcCoingecko,  runnerEthCoingecko */}
+		runnerUsdtEthCryptoComp, /*runnerBnbCoingecko,, runnerUsdtEthCoingecko,
+		runnerUsdtBnbCoingecko, /*runnerUsdtBtcСoingecko,
+		runnerBtcCoingecko, runnerEthCoingecko*/}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -157,6 +170,8 @@ func main() {
 
 	<-sigChan
 	log.Println("Received shutdown signal, stopping...")
+
+	log.Println("Application shut down gracefully")
 
 	cancel()
 	wg.Wait()
