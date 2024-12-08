@@ -2,19 +2,26 @@ package main
 
 import (
 	"context"
-	"github.com/Oleg323-creator/api2.0/internal/db"
-	"github.com/Oleg323-creator/api2.0/internal/handlers"
 	"github.com/Oleg323-creator/api2.0/internal/runners"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/handlers"
+	_ "github.com/Oleg323-creator/api2.0/internal/runners"
+	"net/http"
+	_ "os"
+	_ "os/signal"
+
+	"sync"
+	_ "syscall"
 
 	_ "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/source/file" // драйвер для работы с файлами миграций
 	_ "github.com/lib/pq"                                // драйвер для PostgreSQL
 	"log"
-	"sync"
+	_ "sync"
 )
 
 const СoingeckoType = "Coingecko"
@@ -47,44 +54,20 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/rates/list", handler.GetEndpoint)
 
+	handlerWithMiddleware := handlers.Middleware(mux)
+
 	// INIT SERVER
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: handlerWithMiddleware,
 	}
 
-	// USING DIFFERENT GOROUTINES FOR SERVICE AND FOR PARCING PRICES
 	go func() {
 		log.Println("Server is running on port 8080...")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}
 	}()
-	////////////////////////////////////////////////////////////
-	/*
-		http.HandleFunc("/rates/list", handler.GetEndpoint)
-
-		log.Println("Server is running on port 8080...")
-		err = http.ListenAndServe(":8080", nil)
-		if err != nil {
-			log.Fatal("Server failed:", err)
-		}
-	*/
-	/*// UP MIGRATIONS
-	err := handlers.RunMigrations(cfg)
-	if err != nil {
-		log.Fatalf("Migration failed: %v", err)
-	}
-
-		// DB INIT
-		ctx := context.Background()
-		dbConn, err := db.NewDB(ctx, "postgres", cfg)
-		if err != nil {
-			log.Fatal("Failed to connect to database:", err)
-		}
-		defer dbConn.Close()
-	*/
-	//CRYPTO COMPARE RUNNERS INIT
 
 	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT")
 	if err != nil {
@@ -115,43 +98,44 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
-	/*
-					//COINGECKO RUNNERS INIT
-					runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT")
+
+	/*			//COINGECKO RUNNERS INIT
+							runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT")
+							if err != nil {
+								log.Fatal("Failed to create runner:", err)
+							}
+
+						runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT")
+						if err != nil {
+							log.Fatal("Failed to create runner:", err)
+						}
+
+					runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT")
 					if err != nil {
 						log.Fatal("Failed to create runner:", err)
 					}
 
-				runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT")
+					runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC")
+					if err != nil {
+						log.Fatal("Failed to create runner:", err)
+					}
+
+				runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB")
 				if err != nil {
 					log.Fatal("Failed to create runner:", err)
 				}
 
-			runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT")
-			if err != nil {
-				log.Fatal("Failed to create runner:", err)
-			}
-
-			runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC")
-			if err != nil {
-				log.Fatal("Failed to create runner:", err)
-			}
-
-		runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB")
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
-
-		runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH")
-		if err != nil {
-			log.Fatal("Failed to create runner:", err)
-		}
+				runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH")
+				if err != nil {
+					log.Fatal("Failed to create runner:", err)
+				}
 	*/
 	runnerSlice := []*runners.Runner{runnerBtcCryptoComp, runnerUsdtBnbCryptoComp,
 		runnerEthCryptoComp, runnerBnbCryptoComp, runnerUsdtBtcCryptoComp,
 		runnerUsdtEthCryptoComp, /*runnerBnbCoingecko,, runnerUsdtEthCoingecko,
-		runnerUsdtBnbCoingecko, /*runnerUsdtBtcСoingecko,
-		runnerBtcCoingecko, runnerEthCoingecko*/}
+		runnerUsdtBnbCoingecko, runnerUsdtBtcСoingecko,
+		runnerBtcCoingecko, runnerEthCoingecko*/
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
