@@ -24,37 +24,3 @@ func NewConnector(conType string) (ConnectorAPI, error) {
 		return nil, fmt.Errorf("unknown connector type")
 	}
 }
-
-/*func main() {
-	//GECKO IMPLEMENTATION
-	conn, err := NewConnector(СoingeckoType)
-	if err != nil {
-		return
-	}
-	_, err = conn.LoadCoins()
-	if err != nil {
-		return
-	}
-
-	rate, err := conn.GetRates("BTC", "USDT")
-	if err != nil {
-		return
-	}
-	fmt.Println(rate)
-
-	//CRYPTO_COMPARE IMPLEMENTATION
-	conn, err = NewConnector(CryptoCompType)
-	if err != nil {
-		return
-	}
-	_, err = conn.LoadCoins()
-	if err != nil {
-		return
-	}
-
-	rate, err = conn.GetRates("BTC", "USDT")
-	if err != nil {
-		return
-	}
-	fmt.Println(rate)
-}*/

@@ -38,10 +38,10 @@ func main() {
 		SSLMode:  "disable",
 	}
 
-	//DB CONNECT
 	// DB CONNECT
 	dbConn := db.NewDB(cfg)
 
+	//CONNECT DB FOR MAKING REQUSTS
 	repo := db.NewRepository(dbConn)
 	handler := handlers.NewHandler(repo)
 
@@ -51,8 +51,10 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
+	//SERVER
 	mux := http.NewServeMux()
 	mux.HandleFunc("/rates/list", handler.GetEndpoint)
+	mux.HandleFunc("/rate/count", handler.PostEndpoint)
 
 	handlerWithMiddleware := handlers.Middleware(mux)
 
@@ -100,35 +102,35 @@ func main() {
 	}
 
 	/*			//COINGECKO RUNNERS INIT
-							runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT")
-							if err != nil {
-								log.Fatal("Failed to create runner:", err)
-							}
+	runnerBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BNB", "USDT")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 
-						runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT")
-						if err != nil {
-							log.Fatal("Failed to create runner:", err)
-						}
+	runnerBtcCoingecko, err := runners.NewRunner(СoingeckoType, 1, "BTC", "USDT")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 
-					runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT")
-					if err != nil {
-						log.Fatal("Failed to create runner:", err)
-					}
+	runnerEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "ETH", "USDT")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 
-					runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC")
-					if err != nil {
-						log.Fatal("Failed to create runner:", err)
-					}
+	runnerUsdtBtcСoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BTC")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 
-				runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB")
-				if err != nil {
-					log.Fatal("Failed to create runner:", err)
-				}
+	runnerUsdtBnbCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "BNB")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 
-				runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH")
-				if err != nil {
-					log.Fatal("Failed to create runner:", err)
-				}
+	runnerUsdtEthCoingecko, err := runners.NewRunner(СoingeckoType, 1, "USDT", "ETH")
+	if err != nil {
+		log.Fatal("Failed to create runner:", err)
+		}
 	*/
 	runnerSlice := []*runners.Runner{runnerBtcCryptoComp, runnerUsdtBnbCryptoComp,
 		runnerEthCryptoComp, runnerBnbCryptoComp, runnerUsdtBtcCryptoComp,
