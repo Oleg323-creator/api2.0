@@ -43,8 +43,8 @@ func main() {
 
 	//SERVER
 	mux := http.NewServeMux()
-	mux.HandleFunc("/rates/list", handler.GetEndpoint)
-	mux.HandleFunc("/rate/count", handler.PostEndpoint)
+	mux.Handle("/rates/list", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.GetEndpoint)))
+	mux.Handle("/rate/count", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.PostEndpoint)))
 	mux.HandleFunc("/register", handler.SignUp)
 	mux.HandleFunc("/login", handler.SignIn)
 

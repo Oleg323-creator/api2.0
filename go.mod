@@ -4,6 +4,7 @@ go 1.23.3
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/joho/godotenv v1.5.1
