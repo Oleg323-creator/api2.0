@@ -9,19 +9,9 @@ import (
 
 	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/Oleg323-creator/api2.0/internal/handlers"
-	_ "github.com/Oleg323-creator/api2.0/internal/runners"
-	"net/http"
-	_ "os"
-	_ "os/signal"
-
-	"sync"
-	_ "syscall"
-
-	_ "github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/source/file" // драйвер для работы с файлами миграций
-	_ "github.com/lib/pq"                                // драйвер для PostgreSQL
 	"log"
-	_ "sync"
+	"net/http"
+	"sync"
 )
 
 const СoingeckoType = "Coingecko"
@@ -55,6 +45,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/rates/list", handler.GetEndpoint)
 	mux.HandleFunc("/rate/count", handler.PostEndpoint)
+	mux.HandleFunc("/register", handler.SignUp)
+	mux.HandleFunc("/login", handler.SignIn)
 
 	handlerWithMiddleware := handlers.Middleware(mux)
 
@@ -66,7 +58,7 @@ func main() {
 
 	go func() {
 		log.Println("Server is running on port 8080...")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}
 	}()

@@ -2,8 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 	"log"
 	"strings"
 )
@@ -163,4 +166,65 @@ func (r *Repository) GetRatesToCount(countRateParams FilterParams) ([]CountRate,
 	}
 
 	return countedRates, nil
+}
+
+// SAIVING THIS INFO INTO DB
+type User struct {
+	ID       int
+	Email    string
+	Password string
+}
+
+// ///////////////////////////////////////////////////////////////////////////////////////////////
+func (r *Repository) SignUpUserInDB(userData User) error {
+
+	queryBuilder := squirrel.Insert("users").
+		Columns("email", "password").
+		Values(userData.Email, userData.Password)
+
+	query, args, err := queryBuilder.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("Failed to build insert query: %v ", err)
+	}
+
+	// INSEARTING
+	_, err = r.DB.Exec(query, args...)
+	if err != nil {
+		// CHECKING IF UNIQUE
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
+			return errors.New("user already exists")
+		}
+		return err
+	}
+	return nil
+}
+
+// ERRORS FOR EXISTS ACCOUNT
+var ErrEmailAlreadyExists = errors.New("email already exists")
+var ErrEmailNotFound = errors.New("email not found")
+var ErrInvalidPassword = errors.New("invalid password")
+
+func (r *Repository) SignInUserInDB(email string) (string, string, error) {
+
+	var storedEmail, storedPassword string
+
+	query, args, err := squirrel.Select("email", "password").
+		From("users").
+		Where(squirrel.Eq{"email": email}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+
+	if err != nil {
+		return "", "", err
+	}
+
+	err = r.DB.QueryRow(query, args...).Scan(&storedEmail, &storedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", ErrEmailNotFound
+		}
+		return "", "", err
+	}
+
+	return storedEmail, storedPassword, nil
 }
