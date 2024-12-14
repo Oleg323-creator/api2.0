@@ -2,7 +2,7 @@ package handlers
 
 import (
 	_ "errors"
-	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db/rep"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -51,7 +51,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	//GETTING USER DATA FROM DB
 	storedUsername, storedPassword, err := h.repository.SignInUserInDB(req.Email)
 	if err != nil {
-		if err == db.ErrEmailNotFound {
+		if err == rep.ErrEmailNotFound {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User not found" + err.Error()})
 			return
 		}

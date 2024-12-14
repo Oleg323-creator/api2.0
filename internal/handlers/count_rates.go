@@ -2,7 +2,7 @@ package handlers
 
 import (
 	_ "github.com/Masterminds/squirrel"
-	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db/rep"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -28,7 +28,7 @@ func (h *Handler) PostEndpoint(c *gin.Context) {
 
 	log.Printf("Decoded request: %+v", req)
 
-	params := db.FilterParams{
+	params := rep.FilterParams{
 		FromCurrency: req.FromCurrency,
 		ToCurrency:   req.ToCurrency,
 		Provider:     req.Provider,

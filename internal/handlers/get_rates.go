@@ -1,22 +1,22 @@
 package handlers
 
 import (
-	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db/rep"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 // TO CONNECT IT WITH db.repository
 type Handler struct {
-	repository *db.Repository
+	repository *rep.Repository
 }
 
-func NewHandler(repository *db.Repository) *Handler {
+func NewHandler(repository *rep.Repository) *Handler {
 	return &Handler{repository: repository}
 }
 
 func (h *Handler) GetEndpoint(c *gin.Context) {
-	var params db.FilterParams
+	var params rep.FilterParams
 
 	if err := c.ShouldBindQuery(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

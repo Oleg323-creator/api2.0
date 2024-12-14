@@ -3,7 +3,7 @@ package runners
 import (
 	"context"
 	"fmt"
-	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db/rep"
 	"github.com/Oleg323-creator/api2.0/pkg/connectros"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
@@ -18,10 +18,10 @@ type Runner struct {
 	pollingRate   int
 	rateFrom      string
 	rateTo        string
-	repository    *db.Repository
+	repository    *rep.Repository
 }
 
-func NewRunner(conType string, pollRate int, from string, to string, repository *db.Repository) (*Runner, error) {
+func NewRunner(conType string, pollRate int, from string, to string, repository *rep.Repository) (*Runner, error) {
 	conn, err := connectors.NewConnector(conType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid connector type")

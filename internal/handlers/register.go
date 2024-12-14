@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/Oleg323-creator/api2.0/internal/db/rep"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -32,7 +32,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	params := db.User{
+	params := rep.User{
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
