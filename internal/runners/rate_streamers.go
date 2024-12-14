@@ -2,9 +2,8 @@ package runners
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"github.com/Masterminds/squirrel"
+	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/Oleg323-creator/api2.0/pkg/connectros"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
@@ -19,9 +18,10 @@ type Runner struct {
 	pollingRate   int
 	rateFrom      string
 	rateTo        string
+	repository    *db.Repository
 }
 
-func NewRunner(conType string, pollRate int, from string, to string) (*Runner, error) {
+func NewRunner(conType string, pollRate int, from string, to string, repository *db.Repository) (*Runner, error) {
 	conn, err := connectors.NewConnector(conType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid connector type")
@@ -38,10 +38,11 @@ func NewRunner(conType string, pollRate int, from string, to string) (*Runner, e
 		pollingRate:   pollRate,
 		rateFrom:      from,
 		rateTo:        to,
+		repository:    repository,
 	}, nil
 }
 
-func (r *Runner) Run(dbConn *sql.DB, ctx context.Context, wg *sync.WaitGroup) {
+func (r *Runner) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	ticker := time.NewTicker(time.Duration(r.pollingRate) * time.Second)
@@ -59,7 +60,7 @@ func (r *Runner) Run(dbConn *sql.DB, ctx context.Context, wg *sync.WaitGroup) {
 			}
 
 			//SAIVING RATES TO DB
-			err = r.saveDataToDB(dbConn, rates)
+			err = r.repository.SaveDataToDB(r.rateFrom, r.rateTo, r.connectorType, rates)
 			if err != nil {
 				log.Printf("Error saving data to DB: %v", err)
 			}
@@ -69,43 +70,4 @@ func (r *Runner) Run(dbConn *sql.DB, ctx context.Context, wg *sync.WaitGroup) {
 
 		}
 	}
-}
-
-func (r *Runner) saveDataToDB(dbConn *sql.DB, data map[string]interface{}) error {
-
-	// CHECKING KEYS WE ARE GETTING FROM PROVIDERS
-	rate, ok := data[""]
-	if !ok {
-		rate, ok = data["USDT"]
-		if !ok {
-			rate, ok = data["BTC"]
-			if !ok {
-				rate, ok = data["ETH"]
-				if !ok {
-					rate, ok = data["BNB"]
-					if !ok {
-						return fmt.Errorf("invalid rate data format: got %T", data["rate"])
-					}
-				}
-			}
-		}
-	}
-
-	queryBuilder := squirrel.Insert("rates").
-		Columns("from_currency", "to_currency", "rate", "provider", "created_at", "updated_at").
-		Values(r.rateFrom, r.rateTo, rate, r.connectorType, time.Now(), time.Now()).
-		Suffix("ON CONFLICT (from_currency, to_currency, provider) DO UPDATE SET rate = EXCLUDED.rate, updated_at = EXCLUDED.updated_at")
-
-	query, args, err := queryBuilder.PlaceholderFormat(squirrel.Dollar).ToSql()
-	if err != nil {
-		return fmt.Errorf("failed to build SQL query: %v", err)
-	}
-
-	_, execErr := dbConn.ExecContext(context.Background(), query, args...)
-	if execErr != nil {
-		return fmt.Errorf("failed to execute SQL query: %v", execErr)
-	}
-	log.Println("Data saved to DB:", data)
-
-	return nil
 }

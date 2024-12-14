@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"strings"
+	"time"
 )
 
 //USING THIS FILE FOR GETTING DATA FROM DB FOR GET/POST REQUESTS
@@ -227,4 +229,43 @@ func (r *Repository) SignInUserInDB(email string) (string, string, error) {
 	}
 
 	return storedEmail, storedPassword, nil
+}
+
+func (r *Repository) SaveDataToDB(rateFrom string, rateTo string, connectorType string, data map[string]interface{}) error {
+
+	// CHECKING KEYS WE ARE GETTING FROM PROVIDERS
+	rate, ok := data[""]
+	if !ok {
+		rate, ok = data["USDT"]
+		if !ok {
+			rate, ok = data["BTC"]
+			if !ok {
+				rate, ok = data["ETH"]
+				if !ok {
+					rate, ok = data["BNB"]
+					if !ok {
+						return fmt.Errorf("invalid rate data format: got %T", data["rate"])
+					}
+				}
+			}
+		}
+	}
+
+	queryBuilder := squirrel.Insert("rates").
+		Columns("from_currency", "to_currency", "rate", "provider", "created_at", "updated_at").
+		Values(rateFrom, rateTo, rate, connectorType, time.Now(), time.Now()).
+		Suffix("ON CONFLICT (from_currency, to_currency, provider) DO UPDATE SET rate = EXCLUDED.rate, updated_at = EXCLUDED.updated_at")
+
+	query, args, err := queryBuilder.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build SQL query: %v", err)
+	}
+
+	_, execErr := r.DB.ExecContext(context.Background(), query, args...)
+	if execErr != nil {
+		return fmt.Errorf("failed to execute SQL query: %v", execErr)
+	}
+	log.Println("Data saved to DB:", data)
+
+	return nil
 }

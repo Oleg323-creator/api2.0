@@ -63,32 +63,32 @@ func main() {
 		}
 	}()
 
-	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT")
+	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "ETH", "USDT")
+	runnerEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "ETH", "USDT", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BNB", "USDT")
+	runnerBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BNB", "USDT", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BTC")
+	runnerUsdtBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BTC", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "ETH")
+	runnerUsdtEthCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "ETH", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
 
-	runnerUsdtBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BNB")
+	runnerUsdtBnbCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "USDT", "BNB", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)
 	}
@@ -139,7 +139,7 @@ func main() {
 		wg.Add(1)
 		go func(r *runners.Runner) {
 			defer wg.Done()
-			r.Run(dbConn, ctx, &wg)
+			r.Run(ctx, &wg)
 		}(runner)
 	}
 
