@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/Oleg323-creator/api2.0/internal/runners"
+	"github.com/gin-gonic/gin"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,7 +11,6 @@ import (
 	"github.com/Oleg323-creator/api2.0/internal/db"
 	"github.com/Oleg323-creator/api2.0/internal/handlers"
 	"log"
-	"net/http"
 	"sync"
 )
 
@@ -41,28 +41,44 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	//SERVER
-	mux := http.NewServeMux()
-	mux.Handle("/rates/list", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.GetEndpoint)))
-	mux.Handle("/rate/count", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.PostEndpoint)))
-	mux.HandleFunc("/register", handler.SignUp)
-	mux.HandleFunc("/login", handler.SignIn)
+	router := gin.New()
 
-	handlerWithMiddleware := handlers.Middleware(mux)
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
-	// INIT SERVER
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: handlerWithMiddleware,
+	router.GET("/rates/list", handlers.AuthenticationMiddleware(), handler.GetEndpoint)
+	router.POST("/rate/count", handlers.AuthenticationMiddleware(), handler.PostEndpoint)
+	router.POST("/register", handler.SignUp)
+	router.POST("/login", handler.SignIn)
+
+	err = router.Run(":8080")
+	if err != nil {
+		return
 	}
 
-	go func() {
-		log.Println("Server is running on port 8080...")
-		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed: %v", err)
-		}
-	}()
+	/*
+		//SERVER
+		mux := http.NewServeMux()
+		mux.Handle("/rates/list", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.GetEndpoint)))
+		mux.Handle("/rate/count", handlers.AuthenticationMiddleware(http.HandlerFunc(handler.PostEndpoint)))
+		mux.HandleFunc("/register", handler.SignUp)
+		mux.HandleFunc("/login", handler.SignIn)
 
+		handlerWithMiddleware := handlers.Middleware(mux)
+
+		// INIT SERVER
+		server := &http.Server{
+			Addr:    ":8080",
+			Handler: handlerWithMiddleware,
+		}
+
+		go func() {
+			log.Println("Server is running on port 8080...")
+			if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Server failed: %v", err)
+			}
+		}()
+	*/
 	runnerBtcCryptoComp, err := runners.NewRunner(CryptoCompType, 1, "BTC", "USDT", repo)
 	if err != nil {
 		log.Fatal("Failed to create runner:", err)

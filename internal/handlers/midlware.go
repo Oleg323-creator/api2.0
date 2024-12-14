@@ -1,12 +1,52 @@
 package handlers
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"log"
 	"net/http"
 	"strings"
-	"time"
 )
+
+// FOR CHECKING ACCESS
+func AuthenticationMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing"})
+			c.Abort()
+			return
+		}
+
+		if !isValidToken(token) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func isValidToken(tokenString string) bool {
+	// DEL "Bearer " FROM TOKEN
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Проверяем метод подписи (HMAC)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return jwtSecretKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		return false
+	}
+
+	return true
+}
+
+/*
 
 type ResponseRecorder struct {
 	http.ResponseWriter
@@ -30,39 +70,4 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// FOR CHECKING ACCESS
-func AuthenticationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		if token == "" {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
-			return
-		}
-
-		if !isValidToken(token) {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func isValidToken(tokenString string) bool {
-	// DEL "Bearer " FROM TOKEN
-	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Проверяем метод подписи (HMAC)
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.ErrSignatureInvalid
-		}
-		return jwtSecretKey, nil
-	})
-
-	if err != nil || !token.Valid {
-		return false
-	}
-
-	return true
-}
+*/

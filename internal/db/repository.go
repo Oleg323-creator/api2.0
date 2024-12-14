@@ -17,16 +17,16 @@ import (
 
 // PARAMS FROM REQUESTS
 type FilterParams struct {
-	FromCurrency string  `json:"from_Currency"`
-	ToCurrency   string  `json:"to_currency"`
-	Provider     string  `json:"provider"`
-	Page         int     `json:"page"`
-	Limit        int     `json:"limit"`
-	ID           int     `json:"id"`
-	Rate         float64 `json:"rate"`
-	Order        string  `json:"order"`
-	OrderDir     string  `json:"order_dir"`
-	Amount       float64 `json:"amount"`
+	FromCurrency string  `form:"from_currency" json:"from_currency"`
+	ToCurrency   string  `form:"to_currency" json:"to_currency"`
+	Provider     string  `form:"provider" json:"provider"`
+	Page         int     `form:"page" json:"page"`
+	Limit        int     `form:"limit" json:"limit"`
+	ID           int     `form:"id" json:"id"`
+	Rate         float64 `form:"rate" json:"rate"`
+	Order        string  `form:"order" json:"order"`
+	OrderDir     string  `form:"order_dir" json:"order_dir"`
+	Amount       float64 `form:"amount" json:"amount"`
 }
 
 // TO CONNECT IT WITH DB

@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	_ "errors"
 	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -11,12 +11,12 @@ import (
 )
 
 type SignInRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `form:"email" json:"email"`
+	Password string `form:"password" json:"password"`
 }
 
 type LoginResponse struct {
-	JWTtoken string `json:"token"`
+	JWTtoken string `form:"token" json:"token"`
 }
 
 var jwtSecretKey = []byte("sf9vd9s1vsfdvdsv8fdv56114869s5fvd1hntjmuhngrbvfretbhnymju")
@@ -39,6 +39,50 @@ func GenerateJWT(email string) (string, error) {
 	return tokenString, nil
 }
 
+func (h *Handler) SignIn(c *gin.Context) {
+
+	var req SignInRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body" + err.Error()})
+		return
+	}
+
+	//GETTING USER DATA FROM DB
+	storedUsername, storedPassword, err := h.repository.SignInUserInDB(req.Email)
+	if err != nil {
+		if err == db.ErrEmailNotFound {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User not found" + err.Error()})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Database error: " + err.Error()})
+		return
+	}
+
+	//CHECKING PASSWORD
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(req.Password)); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid password" + err.Error()})
+		return
+	}
+
+	token, err := GenerateJWT(storedUsername)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to generate token: " + err.Error()})
+		return
+	}
+
+	tokenJWT := LoginResponse{
+		JWTtoken: token,
+	}
+
+	response := gin.H{
+		"message": tokenJWT,
+	}
+
+	c.JSON(http.StatusCreated, response)
+}
+
+/*
 func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	var req SignInRequest
@@ -79,3 +123,4 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(response)
 }
+*/

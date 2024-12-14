@@ -1,32 +1,28 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	_ "github.com/Masterminds/squirrel"
 	"github.com/Oleg323-creator/api2.0/internal/db"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 )
 
 // GETTING THIS STRUCT FROM POST REQUEST
 type CalculationRequest struct {
-	FromCurrency string  `json:"from_currency"`
-	ToCurrency   string  `json:"to_currency"`
-	Provider     string  `json:"provider"`
-	Amount       float64 `json:"amount"`
+	FromCurrency string  `form:"from_currency" json:"from_currency"`
+	ToCurrency   string  `form:"to_currency" json:"to_currency"`
+	Provider     string  `form:"provider" json:"provider"`
+	Amount       float64 `form:"amount" json:"amount"`
 }
 
-func (h *Handler) PostEndpoint(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostEndpoint(c *gin.Context) {
 	var req CalculationRequest
 
 	log.Println("Received POST request")
 
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req)
-	if err != nil {
-		log.Printf("Error decoding request body: %v", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -42,16 +38,14 @@ func (h *Handler) PostEndpoint(w http.ResponseWriter, r *http.Request) {
 	// GO TO DB
 	data, err := h.repository.GetRatesToCount(params)
 	if err != nil {
-		log.Printf("Error fetching rates: %v", err)
-		http.Error(w, fmt.Sprintf("Error fetching rates: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err = json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("Error encoding response: %v", err)
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Data successfully fetched",
+		"data":    data,
+	})
 }
