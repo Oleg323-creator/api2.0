@@ -66,11 +66,16 @@ func main() {
 	// Initialize cryptocurrency "runners"
 	curr := []string{"BTC", "ETH", "BNB"}
 	for i := range curr {
-		_, err = runners.NewRunner(CryptoCompType, 1, curr[i], "USDT", repo)
+		runner, err := runners.NewRunner(CryptoCompType, 1, curr[i], "USDT", repo)
 		if err != nil {
 			log.Fatal("Failed to create runner:", err)
 			return
 		}
+		wg.Add(1)
+		go func(r *runners.Runner) {
+			defer wg.Done()
+			r.Run(ctx, &wg)
+		}(runner)
 	}
 
 	for i := range curr {
